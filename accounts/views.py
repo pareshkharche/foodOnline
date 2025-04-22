@@ -18,6 +18,7 @@ from django.utils.http import urlsafe_base64_decode
 
 from vendor.models import Vendor
 
+from django.template.defaultfilters import slugify
 
 # Create your views here.
 
@@ -86,7 +87,7 @@ def registerUser(request):
 def registerVendor(request):
     if request.user.is_authenticated:
         messages.warning(request, 'You are already logged in!')
-        return redirect('dashboard')
+        return redirect('myAccount')
     elif request.method == 'POST':
         #store the data and create the user
         form = UserForm(request.POST)
@@ -102,8 +103,8 @@ def registerVendor(request):
             user.save()
             vendor = v_form.save(commit=False)
             vendor.user = user
-            #vendor_name = v_form.cleaned_data['vendor_name']
-            #vendor.vendor_slug = slugify(vendor_name)+'-'+str(user.id)
+            vendor_name = v_form.cleaned_data['vendor_name']
+            vendor.vendor_slug = slugify(vendor_name)+'-'+str(user.id)
             user_profile = UserProfile.objects.get(user=user)
             vendor.user_profile = user_profile
             vendor.save()
