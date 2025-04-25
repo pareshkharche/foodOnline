@@ -5,7 +5,7 @@ from vendor.models import Vendor
 
 class Category(models.Model):
     vendor = models.ForeignKey(Vendor, on_delete=models.CASCADE)
-    category_name = models.CharField(max_length=50, unique=True)
+    category_name = models.CharField(max_length=50)
     slug = models.SlugField(max_length=100, unique=True)
     description = models.TextField(max_length=250, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -33,6 +33,10 @@ class FoodItem(models.Model):
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        self.food_title = self.food_title.title()  # Converts 'veg thali' to 'Veg Thali'
+        super(FoodItem, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.food_title
