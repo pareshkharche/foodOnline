@@ -71,14 +71,19 @@
     }
     
     function showPosition(position) {
-        var lat = position.coords.latitude
-        var lng = position.coords.longitude
+        //console.log(position);
+        //var lat = position.coords.latitude
+       // var lng = position.coords.longitude
 
         // var lat = '19.0713949'
         // var lng = '72.9984126'
 
+        var lat = 20.83420
+        var lng = 76.45975
+
         // hit AJAX request to googlemaps api endpoint and get the location data using those lat and lng
         var GOOGLE_API_KEY = "{{ GOOGLE_API_KEY }}"
+
         var url = "https://maps.googleapis.com/maps/api/geocode/json?latlng="+lat+","+lng+"+&key="+GOOGLE_API_KEY
         
         $.ajax({
@@ -92,4 +97,47 @@
             }
         })
     }
-    </script>
+    </script> 
+
+    <!-- <script>
+        var x = document.getElementById("location");
+        var current_location = sessionStorage.getItem("current_location")
+        
+        if (current_location != "") {
+            x.value = current_location;
+        }
+        
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+            } else {
+                x.innerHTML = "Geolocation is not supported by this browser.";
+            }
+        }
+        
+        function showPosition(position) {
+            var lat = position.coords.latitude;
+            var lng = position.coords.longitude;
+        
+            // Get the LOCATIONIQ API KEY from Django settings
+            var LOCATIONIQ_API_KEY = "{{ LOCATIONIQ_API_KEY }}";
+        
+            // Construct the LocationIQ API URL
+            var url = `https://us1.locationiq.com/v1/reverse.php?key=${LOCATIONIQ_API_KEY}&lat=${lat}&lon=${lng}&format=json`;
+        
+            $.ajax({
+                url: url,
+                type: "GET",
+                success: function(response) {
+                    var current_location = response.display_name;
+                    x.value = current_location;
+                    sessionStorage.setItem("current_location", current_location);
+                    window.location = '?lat=' + lat + '&lng=' + lng;
+                },
+                error: function(xhr, status, error) {
+                    console.error("LocationIQ API error:", error);
+                }
+            });
+        }
+        </script>
+         -->
