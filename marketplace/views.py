@@ -5,11 +5,15 @@ from django.shortcuts import get_object_or_404
 
 from vendor.models import Vendor
 from menu.models import Category, FoodItem
+from vendor.models import OpeningHour, Vendor
+
 from .context_processors import get_cart_counter, get_cart_amounts
 from .models import Cart
 
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
+from datetime import datetime, date, time
+
 
 from django.contrib.gis.geos import GEOSGeometry
 from django.contrib.gis.measure import D # ``D`` is a shortcut for ``Distance``
@@ -39,53 +43,54 @@ def vendor_detail(request, vendor_slug):
     categories = Category.objects.filter(vendor=vendor).prefetch_related(
         Prefetch(
             'fooditems',
-            queryset = FoodItem.objects.filter(is_available=True)
+            queryset=FoodItem.objects.filter(is_available=True)
         )
     )
 
-    # opening_hours = OpeningHour.objects.filter(vendor=vendor).order_by('day', 'from_hour')
-    
-    # Check current day's opening hours.
-    today_date = date.today()
-    today = today_date.isoweekday()
-    
-    # current_opening_hours = OpeningHour.objects.filter(vendor=vendor, day=today)
+    opening_hours = OpeningHour.objects.filter(vendor=vendor).order_by('day', 'from_hour')
+
+    # Get current time
+    now = datetime.now()
+    current_time = now.time()
+
+    # Get today's weekday (1=Monday, ..., 7=Sunday)
+    today = date.today().isoweekday()
+
+    # Filter today's opening hours
+    current_opening_hours = OpeningHour.objects.filter(vendor=vendor, day=today)
+
+    # Determine if restaurant is open
+    is_open = False
+    for hour in current_opening_hours:
+        if not hour.is_closed:
+            # Convert the string from_hour and to_hour to datetime.time
+            from_hour = datetime.strptime(hour.from_hour, "%I:%M %p").time()
+            to_hour = datetime.strptime(hour.to_hour, "%I:%M %p").time()
+
+            # Check if the current time is between from_hour and to_hour
+            if from_hour <= current_time <= to_hour:
+                is_open = True
+                break
+
+    # Pass the is_open status in context
     if request.user.is_authenticated:
         cart_items = Cart.objects.filter(user=request.user)
     else:
         cart_items = None
+
     context = {
         'vendor': vendor,
         'categories': categories,
         'cart_items': cart_items,
-       
+        'opening_hours': opening_hours,
+        'current_opening_hours': current_opening_hours,
+        'is_open': is_open,  # Pass is_open status to the template
     }
+
     return render(request, 'marketplace/vendor_detail.html', context)
 
 
 
-# def add_to_cart(request, food_id):
-#     if request.user.is_authenticated:
-#         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-#             try:
-#                 #check if food item exist
-#                 fooditem = FoodItem.objects.get(id=food_id)
-#                 #check if user has already added that food to cart
-#                 try:
-#                     chkCart = Cart.objects.get(user=request.user, fooditem=fooditem)
-#                     #Increase the cart quantity
-#                     chkCart.quantity += 1
-#                     chkCart.save()
-#                     return JsonResponse({'status':'Success', 'message': 'Increased the cart quantity'})
-#                 except:
-#                     chkCart = Cart.objects.create(user=request.user, fooditem=fooditem, quantity=1)
-#                     return JsonResponse({'ststus': 'Success', 'message': 'Added the ffood to the cart!'})
-#             except:
-#                 return JsonResponse({'ststus': 'Failed', 'message': 'This food doesnot exist!'})
-#         else:
-#             return JsonResponse({'ststus': 'Failed', 'message': 'Invalid request!'})
-#     else:
-#         return JsonResponse({'status': 'Failed', 'message': 'Please login to continue.'})
 
 def add_to_cart(request, food_id):
     if request.user.is_authenticated:
@@ -169,29 +174,6 @@ def delete_cart(request, cart_id):
             return JsonResponse({'status': 'Failed', 'message': 'Invalid request!'})
 
 
-# def search(request):
-#     # if not 'address' in request.GET:
-#     #     return redirect('marketplace')
-#     # else:
-#         address = request.GET['address']
-#         latitude = request.GET['lat']
-#         longitude = request.GET['lng']
-#         radius = request.GET['radius']
-#         keyword = request.GET['keyword']
-
-
-#         # get vendor ids that has the food item the user is looking for
-#         fetch_vendors_by_fooditems = FoodItem.objects.filter(food_title__icontains=keyword, is_available=True).values_list('vendor', flat=True)
-#         # print(fetch_vendors_by_fooditems)
-#         vendors = Vendor.objects.filter(Q(id__in=fetch_vendors_by_fooditems) | Q(vendor_name__icontains=keyword, is_approved=True, user__is_active=True))
-#         vendor_count = vendors.count()
-#         context = {
-#             'vendors': vendors,
-#             'vendor_count': vendor_count,
-#             # 'source_location': address,
-#         }
-
-#         return render(request, 'marketplace/listings.html', context)
 
 def search(request):
     if not 'address' in request.GET:
