@@ -236,3 +236,6 @@ def checkout(request):
         'cart_items': cart_items,
     }
     return render(request, 'marketplace/checkout.html', context)
+
+
+
