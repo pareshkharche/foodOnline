@@ -92,7 +92,7 @@ def place_order(request):
 
             # RazorPay Payment
             DATA = {
-                "amount": int(float(order.total)) * 100,
+                "amount": float(order.total) * 100,
                 "currency": "INR",
                 "receipt": "receipt #"+order.order_number,
                 "notes": {
@@ -108,7 +108,7 @@ def place_order(request):
                 'cart_items': cart_items,
                 'rzp_order_id': rzp_order_id,
                 'RZP_KEY_ID': RZP_KEY_ID,
-                'rzp_amount': int(float(order.total)) * 100,
+                'rzp_amount': float(order.total) * 100,
             }
             return render(request, 'orders/place_order.html', context)
 

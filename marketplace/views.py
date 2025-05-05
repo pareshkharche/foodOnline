@@ -3,6 +3,7 @@ from django.http import HttpResponse, JsonResponse
 
 from django.shortcuts import get_object_or_404
 
+from orders.models import Order
 from vendor.models import Vendor
 from menu.models import Category, FoodItem
 from vendor.models import OpeningHour, Vendor
@@ -236,6 +237,3 @@ def checkout(request):
         'cart_items': cart_items,
     }
     return render(request, 'marketplace/checkout.html', context)
-
-
-
